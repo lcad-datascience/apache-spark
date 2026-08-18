@@ -1,0 +1,118 @@
+# ==============================================================================
+# Cluster Apache Spark Standalone (Master + Workers) via Docker Compose
+#
+# Portas mapeadas (conforme documentação oficial - spark-standalone.html):
+#   7077  -> porta RPC do Master (é o endereço usado em spark://spark-master:7077)
+#   8080  -> Web UI do Master (lista workers, apps rodando/finalizados)
+#   8081  -> Web UI de cada Worker (recursos/executors daquele worker)
+#   4040  -> Web UI da APLICAÇÃO (SparkContext/driver) — só existe enquanto um
+#            job está rodando; a cada novo job ela sobe em 4040, 4041, 4042...
+# ==============================================================================
+
+x-spark-common: &spark-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: spark-standalone:3.5.9
+  # Havia uma config de volume nessa linha que removi, pois cada serviço precisa ter o ser próprio.
+  networks:
+    - spark-net
+  environment:
+    - SPARK_NO_DAEMONIZE=true
+
+services:
+
+  spark-master:
+    <<: *spark-common
+    container_name: spark-master
+    hostname: spark-master
+    volumes:
+      - ./app:/opt/spark-apps:ro
+      - ./data:/opt/spark-data:ro
+      - spark-master-logs:/opt/spark/logs   # volume próprio, não compartilhado
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    ports:
+      - "8080:8080"   # Web UI do Master
+      - "7077:7077"   # Porta RPC do Master (usada por workers e spark-submit)
+      - "4040:4040"   # Web UI da aplicação (quando você rodar spark-shell/pyspark)
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spark-worker-1:
+    <<: *spark-common
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ./app:/opt/spark-apps:ro
+      - ./data:/opt/spark-data:ro
+      - spark-worker-1-logs:/opt/spark/logs   # volume próprio, não compartilhado
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    ports:
+      - "8081:8081"   # Web UI do Worker 1
+    environment:
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_WEBUI_PORT=8081
+
+  spark-worker-2:
+    <<: *spark-common
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ./app:/opt/spark-apps:ro
+      - ./data:/opt/spark-data:ro
+      - spark-worker-2-logs:/opt/spark/logs   # volume próprio, não compartilhado
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    ports:
+      - "8082:8082"   # Web UI do Worker 2 (porta host diferente pra não colidir com o worker 1)
+    environment:
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_WEBUI_PORT=8082
+
+  # Cliente Jupyter Lab: NÃO participa do cluster como master/worker, só se
+  # conecta a ele como cliente (spark://spark-master:7077) para rodar notebooks.
+  # Imagem separada (notebook.Dockerfile) — ver comentário no próprio arquivo.
+  spark-notebook:
+    build:
+      context: .
+      dockerfile: notebook.Dockerfile   # era Dockerfile.notebook
+    image: spark-notebook:3.5.9
+    container_name: spark-notebook
+    hostname: spark-notebook
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - spark-net
+    ports:
+      - "8888:8888"   # Jupyter Lab
+    volumes:
+      - ./notebooks:/opt/spark-notebooks        # rw: aqui você salva seus .ipynb
+      - ./app:/opt/spark-apps:ro
+      - ./data:/opt/spark-data:ro
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+
+networks:
+  spark-net:
+    driver: bridge
+
+volumes:
+  spark-master-logs:
+  spark-worker-1-logs:
+  spark-worker-2-logs:

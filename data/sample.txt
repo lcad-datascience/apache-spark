@@ -1,0 +1,5 @@
+Apache Spark e um motor de analise unificado para processamento de dados em larga escala.
+Spark roda em cluster e distribui o processamento entre varios workers.
+Este arquivo serve apenas para validar a instalacao do Spark via Docker.
+Docker facilita a reproducao do ambiente de Spark em qualquer maquina.
+Arch Linux com Docker e uma combinacao comum entre engenheiros de dados.

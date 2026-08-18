@@ -1,0 +1,6 @@
+# Dependências SOMENTE do ambiente de desenvolvimento (notebook).
+# Não entram na imagem de master/worker que vai pra produção — mantém
+# aquela imagem enxuta e com menor superfície de ataque/manutenção.
+jupyterlab>=4.0,<5.0
+findspark>=2.0,<3.0
+ipykernel>=6.0,<7.0

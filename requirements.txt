@@ -1,0 +1,6 @@
+# Dependências Python adicionais para os jobs PySpark.
+# O PySpark em si NÃO precisa estar aqui: já vem embutido na imagem oficial
+# apache/spark (em $SPARK_HOME/python), na mesma versão do Spark instalado,
+# evitando incompatibilidade entre driver/executors e o client.
+pandas>=2.2,<3.0
+numpy>=1.26,<2.0

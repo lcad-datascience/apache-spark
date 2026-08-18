@@ -1,0 +1,45 @@
+# ==== Python ====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.Python
+
+# ==== Jupyter ====
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ==== Spark ====
+spark-warehouse/
+metastore_db/
+derby.log
+*.log
+
+# ==== Docker ====
+# Overrides locais de compose (não versionar configs específicas de máquina)
+docker-compose.override.yml
+
+# ==== Segredos / config local ====
+.env
+.env.*
+*.pem
+*.key
+
+# ==== Editor / IDE ====
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ==== Sistema operacional ====
+.DS_Store
+Thumbs.db
+
+# ==== Dados grandes / gerados (ajuste conforme seu caso) ====
+# Descomente se passar a gerar outputs pesados dentro de data/ ou app/
+# data/*.parquet
+# data/*.csv
+# !data/sample.txt
