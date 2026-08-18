@@ -1,4 +1,4 @@
-# Apache Spark em Docker — Guia Completo (Arch Linux)
+# Apache Spark em Docker 
 
 Cluster standalone (1 Master + 2 Workers) usando a imagem **oficial** do Apache Spark
 como base, seguindo o padrão documentado em `spark.apache.org/docs/latest/spark-standalone.html`
